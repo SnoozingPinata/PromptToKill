@@ -1,38 +1,38 @@
 
 import os
-import time
+import datetime
 import PySimpleGUI as sg
 
-# notes:
-# need to fix the display of the timer in the GUI
-# want to be able to pass process name and amount of time to wait into program fro CLI
 
+def prompttokill(friendly_name: str, process_name: str, wait_time_seconds: int) -> None:
+    start_time = datetime.datetime.now()
+    kill_time = start_time + datetime.timedelta(seconds=wait_time_seconds)
 
-# format is: year, month, day, hour, minute, second, microsecond
-start_time = int(round(time.time() * 100))
+    layout = [ 
+        [sg.Text(f'{friendly_name} will be terminated at:')], 
+        [sg.Text(text=f"{kill_time.ctime()}")],
+        [sg.Text('Press "Cancel" to close this pop-up or press "Kill Now" to terminate the process immediately.')],
+        [sg.Button('Kill Now'), sg.Button('Cancel')]
+        ]
 
+    window = sg.Window('Prompt To Kill', layout)
 
-def Cancel_program(executable_name):
-    os.system(f"taskkill /f /im {executable_name}")
-
-
-layout = [ 
-    [sg.Text('ProContractor will be terminated in:')], 
-    [sg.Text("timer text", key='-TIMER-')], 
-    [sg.Button('Kill'), sg.Button('Cancel'), sg.Button('DoesNothing')]
-    ]
-
-window = sg.Window('Prompt2Kill', layout)
-
-while True:
-    event, values = window.read()
-    current_time = int(round(time.time() * 100)) - start_time
-    window['-TIMER-'].update("this text was updated")
-    if event == sg.WIN_CLOSED or event == 'Cancel':
-        break
-    if event == 'Kill':
-        #Cancel_program("maxwell.stp.infrastructure.shell.exe")
-        Cancel_program("chrome.exe")
-        window.close()
-    window.refresh()
+    while True:
+        event, values = window.read(timeout=1000)
+        current_time = datetime.datetime.now()
+        if event == sg.WIN_CLOSED or event == 'Cancel':
+            break
+        if event == 'Kill Now' or current_time >= kill_time:
+            os.system(f"taskkill /im {process_name}")
+            break
     
+    window.close()
+
+
+if __name__ == "__main__":
+    friendly_name = "ProContractor"
+    # used for testing
+    #process_name = "chrome.exe"
+    process_name = "maxwell.stp.infrastructure.shell.exe"
+    wait_time_seconds = 1200
+    prompttokill(friendly_name, process_name, wait_time_seconds)
